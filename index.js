@@ -13,6 +13,12 @@ const app = express();
 const router = express.Router();
 // Configuration
 const port = parseInt(process.env.PORT);
+
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "http://localhost:8080");
+  next();
+});
+
 app.use(
   express.static("public"),
   router,
@@ -37,31 +43,42 @@ router.post("/register", bodyParser.json(), async (req, res) => {
     if (bd.userRole === "" || bd.userRole === null) {
       bd.userRole = "user";
     }
-    // Encrypting a password
-    // Default value of salt is 10.
-    bd.userpassword = await hash(bd.userpassword, 10);
-    // Query
 
-    const strQry = `
+    const emailQ = "SELECT email from users WHERE ?";
+    let email = {
+      email: bd.email
+    }
+    db.query(emailQ, email, async (err, results) => {
+      if (err) throw err;
+      if (results.length > 0) {
+        res.send("Email Exists");
+      } else {
+        // Encrypting a password
+        // Default value of salt is 10.
+        bd.userpassword = await hash(bd.userpassword, 10);
+        // Query
+        const strQry = `
         INSERT INTO users(firstname, lastname, gender, address, userRole, email, userpassword)
         VALUES(?, ?, ?, ?, ?, ?, ?);
         `;
-    db.query(
-      strQry,
-      [
-        bd.firstname,
-        bd.lastname,
-        bd.gender,
-        bd.address,
-        bd.userRole,
-        bd.email,
-        bd.userpassword,
-      ],
-      (err, results) => {
-        if (err) throw err;
-        res.send(`number of affected row/s: ${results.affectedRows}`);
+        db.query(
+          strQry,
+          [
+            bd.firstname,
+            bd.lastname,
+            bd.gender,
+            bd.address,
+            bd.userRole,
+            bd.email,
+            bd.userpassword,
+          ],
+          (err, results) => {
+            if (err) throw err;
+            res.send(`number of affected row/s: ${results.affectedRows}`);
+          }
+        );
       }
-    );
+    });
   } catch (e) {
     console.log(`From registration: ${e.message}`);
   }
@@ -92,7 +109,7 @@ router.post("/login", bodyParser.json(), (req, res) => {
       if (results.length === 0) {
         res.send("Email not found");
       } else {
-        const ismatch = await compare(userpassword, results[0].userpassword) 
+        const ismatch = await compare(userpassword, results[0].userpassword);
         // res.json({
         //   results: await compare(userpassword, results[0].userpassword),
         //   // ? results
@@ -127,7 +144,7 @@ router.post("/login", bodyParser.json(), (req, res) => {
             }
           );
         } else {
-          res.send("You entered the wrong password")
+          res.send("You entered the wrong password");
         }
       }
     });
@@ -202,10 +219,13 @@ router.get("/products", (req, res) => {
     `;
   db.query(strQry, (err, results) => {
     if (err) throw err;
-    res.json({
-      status: 200,
-      results: results,
-    });
+    res.json(
+      results
+      //   {
+      //   status: 200,
+      //   results: results,
+      // }
+    );
   });
 });
 
@@ -235,10 +255,13 @@ router.get("/products/:id", (req, res) => {
     `;
   db.query(strQry, [req.params.id], (err, results) => {
     if (err) throw err;
-    res.json({
-      status: 200,
-      results: results.length <= 0 ? "Sorry, no product was found." : results,
-    });
+    res.json(
+      results
+      //   {
+      //   status: 200,
+      //   results: results.length <= 0 ? "Sorry, no product was found." : results,
+      // }
+    );
   });
 });
 
