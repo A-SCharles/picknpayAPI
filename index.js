@@ -15,7 +15,7 @@ const router = express.Router();
 const port = parseInt(process.env.PORT);
 
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "https://picknpay-apitest.herokuapp.com");
+  res.setHeader("Access-Control-Allow-Origin", "*");
   next();
 });
 
