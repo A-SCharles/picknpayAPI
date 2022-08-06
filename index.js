@@ -163,7 +163,6 @@ router.get("/users/verify", (req, res) => {
       });
     } else {
       res.status(200);
-
       res.send(decodedToken);
     }
   });
@@ -220,11 +219,11 @@ router.get("/products", (req, res) => {
   db.query(strQry, (err, results) => {
     if (err) throw err;
     res.json(
-      results
-      //   {
-      //   status: 200,
-      //   results: results,
-      // }
+      // results
+        {
+        status: 200,
+        results: results,
+      }
     );
   });
 });
@@ -256,17 +255,17 @@ router.get("/products/:id", (req, res) => {
   db.query(strQry, [req.params.id], (err, results) => {
     if (err) throw err;
     res.json(
-      results
-      //   {
-      //   status: 200,
-      //   results: results.length <= 0 ? "Sorry, no product was found." : results,
-      // }
+      // results
+        {
+        status: 200,
+        results: results.length <= 0 ? "Sorry, no product was found." : results,
+      }
     );
   });
 });
 
 // Update product
-router.put("/products", (req, res) => {
+router.put("/products/:id", (req, res) => {
   const bd = req.body;
   // Query
   const strQry = `UPDATE products
