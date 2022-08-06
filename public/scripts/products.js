@@ -1,4 +1,4 @@
-const url = "http://localhost:3000/products";
+const url = "https://picknpay-apitest.herokuapp.com/products";
 let products = [{}];
 
 async function getproducts() {
