@@ -6,7 +6,10 @@ const cors = require("cors");
 const path = require("path");
 const db = require("./config/dbconn");
 const jwt = require("jsonwebtoken");
-const { compare, hash } = require("bcrypt");
+const {
+  compare,
+  hash
+} = require("bcrypt");
 // Express app
 const app = express();
 // Express router
@@ -15,7 +18,11 @@ const router = express.Router();
 const port = parseInt(process.env.PORT);
 
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  // res.setHeader("Access-Control-Allow-Origin", "*");
+  res.set({
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': '*',
+  })
   next();
 });
 
@@ -51,7 +58,10 @@ router.post("/register", bodyParser.json(), async (req, res) => {
     db.query(emailQ, email, async (err, results) => {
       if (err) throw err;
       if (results.length > 0) {
-        res.send("Email Exists");
+        res.json({
+          error: "Email Exists"
+        });
+        // res.send("Email Exists");
       } else {
         // Encrypting a password
         // Default value of salt is 10.
@@ -74,7 +84,10 @@ router.post("/register", bodyParser.json(), async (req, res) => {
           ],
           (err, results) => {
             if (err) throw err;
-            res.send(`number of affected row/s: ${results.affectedRows}`);
+            // res.send(`number of affected row/s: ${results.affectedRows}`);
+            res.json({
+              msg: "Registration Successful"
+            });
           }
         );
       }
@@ -98,7 +111,10 @@ router.post("/register", bodyParser.json(), async (req, res) => {
 router.post("/login", bodyParser.json(), (req, res) => {
   try {
     // Get email and password
-    const { email, userpassword } = req.body;
+    const {
+      email,
+      userpassword
+    } = req.body;
     const strQry = `
         SELECT *
         FROM users 
@@ -107,7 +123,9 @@ router.post("/login", bodyParser.json(), (req, res) => {
     db.query(strQry, async (err, results) => {
       if (err) throw err;
       if (results.length === 0) {
-        res.send("Email not found");
+        res.json({
+          msg: "Email not found, Please Register"
+        });
       } else {
         const ismatch = await compare(userpassword, results[0].userpassword);
         // res.json({
@@ -130,21 +148,28 @@ router.post("/login", bodyParser.json(), (req, res) => {
           };
           jwt.sign(
             payload,
-            process.env.jwtSecret,
-            {
+            process.env.jwtSecret, {
               expiresIn: "365d",
             },
             (err, token) => {
+              res.header({
+                'x-auth-token': token
+              })
               if (err) throw err;
               res.json({
                 user: payload.user,
                 token: token,
+                msg: "Login Successful"
+
               });
               // res.json(payload.user);
             }
           );
         } else {
-          res.send("You entered the wrong password");
+          res.json({
+            msg: "You entered the wrong password"
+          });
+          // res.send("You entered the wrong password");
         }
       }
     });
@@ -155,6 +180,9 @@ router.post("/login", bodyParser.json(), (req, res) => {
 
 // Verify
 router.get("/users/verify", (req, res) => {
+  // res.setHeader({
+  //   'x-auth-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjo4LCJmaXJzdG5hbWUiOiJCb2kiLCJsYXN0bmFtZSI6ImEiLCJnZW5kZXIiOiJjIiwiZW1haWwiOiJhLmNoYXJsZXMuZWR1QGdtYWlsLmNvbSIsInVzZXJSb2xlIjoidXNlciIsImFkZHJlc3MiOiJibGFuayJ9LCJpYXQiOjE2NTk4Njg1OTEsImV4cCI6MTY5MTQwNDU5MX0.2bHIFOOyJ9TumjclQ5ONfdCkWTsC4peAZ7tpQC3xAvY"
+  // })
   const token = req.header("x-auth-token");
   jwt.verify(token, process.env.jwtSecret, (error, decodedToken) => {
     if (error) {
@@ -220,7 +248,7 @@ router.get("/products", (req, res) => {
     if (err) throw err;
     res.json(
       // results
-        {
+      {
         status: 200,
         results: results,
       }
@@ -256,7 +284,7 @@ router.get("/products/:id", (req, res) => {
     if (err) throw err;
     res.json(
       // results
-        {
+      {
         status: 200,
         results: results.length <= 0 ? "Sorry, no product was found." : results,
       }
